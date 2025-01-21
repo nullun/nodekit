@@ -1,6 +1,7 @@
 package modal
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/algorandfoundation/nodekit/internal/algod"
 	"github.com/algorandfoundation/nodekit/internal/algod/participation"
@@ -21,6 +22,13 @@ func (m ViewModel) Init() tea.Cmd {
 		m.confirmModal.Init(),
 		m.generateModal.Init(),
 	)
+}
+
+func boolToInt(input bool) int {
+	if input {
+		return 1
+	}
+	return 0
 }
 
 // HandleMessage processes the given message, updates the ViewModel state, and returns any commands to execute.
@@ -75,13 +83,46 @@ func (m ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 			// If the previous state is not active
 			if ok {
 				if !m.transactionModal.Active {
-					if acct.Participation != nil &&
-						acct.Participation.VoteFirstValid == m.transactionModal.Participation.Key.VoteFirstValid {
-						m.SetActive(true)
-						m.infoModal.Active = true
-						m.infoModal.Prefix = "Successfully registered online!\n"
-						m.HasPrefix = true
-						m.SetType(app.InfoModal)
+					if acct.Participation != nil {
+						// comparing values to detect corrupted/non-resident keys
+						fvMatch := boolToInt(acct.Participation.VoteFirstValid == m.transactionModal.Participation.Key.VoteFirstValid)
+						lvMatch := boolToInt(acct.Participation.VoteLastValid == m.transactionModal.Participation.Key.VoteLastValid)
+						kdMatch := boolToInt(acct.Participation.VoteKeyDilution == m.transactionModal.Participation.Key.VoteKeyDilution)
+						selMatch := boolToInt(bytes.Equal(acct.Participation.SelectionParticipationKey, m.transactionModal.Participation.Key.SelectionParticipationKey))
+						votMatch := boolToInt(bytes.Equal(acct.Participation.VoteParticipationKey, m.transactionModal.Participation.Key.VoteParticipationKey))
+						spkMatch := boolToInt(bytes.Equal(*acct.Participation.StateProofKey, *m.transactionModal.Participation.Key.StateProofKey))
+						matchCount := fvMatch + lvMatch + kdMatch + selMatch + votMatch + spkMatch
+						if matchCount == 6 {
+							m.SetActive(true)
+							m.infoModal.Active = true
+							m.infoModal.Prefix = "Successfully registered online!\n"
+							m.HasPrefix = true
+							m.SetType(app.InfoModal)
+						} else if matchCount >= 4 {
+							m.SetActive(true)
+							m.infoModal.Active = true
+							m.infoModal.Prefix = "***WARNING***\nRegistered online but keys do not fully match\nCheck your registered keys carefully against the node keys\n\n"
+							if fvMatch == 0 {
+								m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: Vote First Valid\n"
+							}
+							if lvMatch == 0 {
+								m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: Vote Last Valid\n"
+							}
+							if kdMatch == 0 {
+								m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: Vote Key Dilution\n"
+							}
+							if votMatch == 0 {
+								m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: Vote Key\n"
+							}
+							if selMatch == 0 {
+								m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: Selection Key\n"
+							}
+							if spkMatch == 0 {
+								m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: State Proof Key\n"
+							}
+							m.HasPrefix = true
+							m.SetType(app.InfoModal)
+						}
 					}
 				} else {
 					if acct.Participation == nil {
