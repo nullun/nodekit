@@ -76,7 +76,7 @@ func (m *ViewModel) ShouldAddIncentivesFee() bool {
 	// 2) online keyreg
 	// 3) protocol supports incentives
 	// 4) account is not already incentives eligible
-	return m.State != nil && !m.State.IncentivesDisabled && !m.Active && m.IsIncentiveProtocol() && !m.Account().IncentiveEligible
+	return m.State != nil && !m.State.IncentivesDisabled && !m.Active && m.IsIncentiveProtocol() && m.Account() != nil && !m.Account().IncentiveEligible
 }
 
 func (m *ViewModel) GetControlText() string {
