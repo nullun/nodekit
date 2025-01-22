@@ -69,6 +69,16 @@ func (m *ViewModel) SetActive(active bool) {
 	m.transactionModal.UpdateState()
 }
 
+// SetSuspended sets the active state to false both infoModal and transactionModal, and sets suspended state to true, also for both modals.
+func (m *ViewModel) SetSuspended() {
+	m.infoModal.Active = false
+	m.infoModal.Suspended = true
+	m.infoModal.UpdateState()
+	m.transactionModal.Active = false
+	m.transactionModal.Suspended = true
+	m.transactionModal.UpdateState()
+}
+
 func (m *ViewModel) SetShortLink(res participation.ShortLinkResponse) {
 	m.Link = &res
 	m.transactionModal.Link = &res

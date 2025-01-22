@@ -83,7 +83,7 @@ func (m ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 			// If the previous state is not active
 			if ok {
 				if !m.transactionModal.Active {
-					if acct.Participation != nil {
+					if acct.Participation != nil && acct.Status == "Online" {
 						// comparing values to detect corrupted/non-resident keys
 						fvMatch := boolToInt(acct.Participation.VoteFirstValid == m.transactionModal.Participation.Key.VoteFirstValid)
 						lvMatch := boolToInt(acct.Participation.VoteLastValid == m.transactionModal.Participation.Key.VoteLastValid)
@@ -99,6 +99,10 @@ func (m ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 							m.HasPrefix = true
 							m.SetType(app.InfoModal)
 						} else if matchCount >= 4 {
+							// We use 4 as the "non resident key" threshold here
+							// because it would be valid to re-reg with a key that has the same fv / lv / kd
+							// but it would trigger the non resident condition
+							// TOOD: refactor this beast to have {previous state} -> compare with next state
 							m.SetActive(true)
 							m.infoModal.Active = true
 							m.infoModal.Prefix = "***WARNING***\nRegistered online but keys do not fully match\nCheck your registered keys carefully against the node keys\n\n"
@@ -125,15 +129,17 @@ func (m ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 						}
 					}
 				} else {
+					// TODO: This includes suspended keys, where Status == offline but .Participation is set
+					// Detect and display this
 					if acct.Participation == nil {
 						m.SetActive(false)
-						m.infoModal.Active = false
-						m.transactionModal.Active = false
+						m.SetType(app.InfoModal)
+					} else {
+						m.SetSuspended()
 						m.SetType(app.InfoModal)
 					}
 				}
 			}
-
 		}
 
 	case app.ModalEvent:
