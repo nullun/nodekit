@@ -18,6 +18,7 @@ type ViewModel struct {
 	Controls      string
 	BorderColor   string
 	Active        bool
+	Suspended     bool
 	Prefix        string
 	Participation *api.ParticipationKey
 	State         *algod.StateModel
@@ -74,9 +75,8 @@ func (m *ViewModel) UpdateState() {
 	if m.Participation == nil {
 		return
 	}
-	accountStatus := m.State.Accounts[m.Participation.Address].Status
 
-	if accountStatus == "Online" && m.Active {
+	if m.Active && !m.Suspended {
 		m.BorderColor = "1"
 		m.Controls = "( take " + style.Red.Render(style.Red.Render("(o)ffline")) + " )"
 	}
@@ -100,6 +100,9 @@ func (m ViewModel) View() string {
 	voteKeyDilution := style.Purple("Vote Key Dilution: ") + utils.IntToStr(m.Participation.Key.VoteKeyDilution)
 
 	prefix := ""
+	if m.Suspended {
+		prefix = "**KEY SUSPENDED**: Re-register online"
+	}
 	if m.Prefix != "" {
 		prefix = "\n" + m.Prefix
 	}
