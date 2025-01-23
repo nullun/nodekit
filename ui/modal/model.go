@@ -69,7 +69,7 @@ func (m *ViewModel) SetActive(active bool) {
 	m.transactionModal.UpdateState()
 }
 
-// SetSuspended sets the active state to false both infoModal and transactionModal, and sets suspended state to true, also for both modals.
+// SetSuspended sets the suspended state
 func (m *ViewModel) SetSuspended(sus bool) {
 	m.infoModal.Suspended = sus
 	m.infoModal.UpdateState()

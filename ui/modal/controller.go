@@ -85,9 +85,7 @@ func (m *ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 
 		// Handle suspensions
 		if ok {
-			if acct.Participation != nil && acct.Status == "Offline" {
-				m.SetSuspended(true)
-			}
+			m.SetSuspended(acct.Participation != nil && acct.Status == "Offline")
 		}
 
 		// We found the account, and we are on one of the modals
