@@ -18,6 +18,7 @@ type ViewModel struct {
 	Controls      string
 	BorderColor   string
 	Active        bool
+	Suspended     bool
 	Prefix        string
 	Participation *api.ParticipationKey
 	State         *algod.StateModel
@@ -74,16 +75,15 @@ func (m *ViewModel) UpdateState() {
 	if m.Participation == nil {
 		return
 	}
-	accountStatus := m.State.Accounts[m.Participation.Address].Status
 
-	if accountStatus == "Online" && m.Active {
+	if m.Active && !m.Suspended {
 		m.BorderColor = "1"
-		m.Controls = "( take " + style.Red.Render(style.Red.Render("(o)ffline")) + " )"
+		m.Controls = "( " + style.Red.Render(style.Red.Render("take (o)ffline")) + " )"
 	}
 
 	if !m.Active {
 		m.BorderColor = "3"
-		m.Controls = "( " + style.Red.Render("(d)elete") + " | " + style.Green.Render("(r)egister") + " online )"
+		m.Controls = "( " + style.Red.Render("(d)elete") + " | " + style.Green.Render("(r)egister online") + " )"
 	}
 }
 func (m ViewModel) View() string {
@@ -92,14 +92,17 @@ func (m ViewModel) View() string {
 	}
 	account := style.Cyan.Render("Account: ") + m.Participation.Address
 	id := style.Cyan.Render("Participation ID: ") + m.Participation.Id
-	selection := style.Yellow.Render("Selection Key: ") + *utils.UrlEncodeBytesPtrOrNil(m.Participation.Key.SelectionParticipationKey[:])
-	vote := style.Yellow.Render("Vote Key: ") + *utils.UrlEncodeBytesPtrOrNil(m.Participation.Key.VoteParticipationKey[:])
-	stateProof := style.Yellow.Render("State Proof Key: ") + *utils.UrlEncodeBytesPtrOrNil(*m.Participation.Key.StateProofKey)
+	selection := style.Yellow.Render("Selection Key: ") + *utils.Base64EncodeBytesPtrOrNil(m.Participation.Key.SelectionParticipationKey[:])
+	vote := style.Yellow.Render("Vote Key: ") + *utils.Base64EncodeBytesPtrOrNil(m.Participation.Key.VoteParticipationKey[:])
+	stateProof := style.Yellow.Render("State Proof Key: ") + *utils.Base64EncodeBytesPtrOrNil(*m.Participation.Key.StateProofKey)
 	voteFirstValid := style.Purple("Vote First Valid: ") + utils.IntToStr(m.Participation.Key.VoteFirstValid)
 	voteLastValid := style.Purple("Vote Last Valid: ") + utils.IntToStr(m.Participation.Key.VoteLastValid)
 	voteKeyDilution := style.Purple("Vote Key Dilution: ") + utils.IntToStr(m.Participation.Key.VoteKeyDilution)
 
 	prefix := ""
+	if m.Suspended {
+		prefix = "**KEY SUSPENDED**: Re-register online"
+	}
 	if m.Prefix != "" {
 		prefix = "\n" + m.Prefix
 	}

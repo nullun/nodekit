@@ -69,6 +69,14 @@ func (m *ViewModel) SetActive(active bool) {
 	m.transactionModal.UpdateState()
 }
 
+// SetSuspended sets the suspended state
+func (m *ViewModel) SetSuspended(sus bool) {
+	m.infoModal.Suspended = sus
+	m.infoModal.UpdateState()
+	m.transactionModal.Suspended = sus
+	m.transactionModal.UpdateState()
+}
+
 func (m *ViewModel) SetShortLink(res participation.ShortLinkResponse) {
 	m.Link = &res
 	m.transactionModal.Link = &res

@@ -1,7 +1,7 @@
 ╭──Accounts────────────────────────────────────────────────────────────────────╮
-│ Account        Keys           Status         Expires        Balance          │
+│ Account        Status         Rewards        Expires        Balance          │
 │───────────────────────────────────────────────────────────────────────────   │
-│ ABC            2              Offline        N/A            0                │
+│ ABC            IDLE                          N/A            0                │
 │                                                                              │
 │                                                                              │
 │                                                                              │

@@ -23,8 +23,15 @@ func (m ViewModel) Init() tea.Cmd {
 	)
 }
 
+func boolToInt(input bool) int {
+	if input {
+		return 1
+	}
+	return 0
+}
+
 // HandleMessage processes the given message, updates the ViewModel state, and returns any commands to execute.
-func (m ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
+func (m *ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
@@ -68,31 +75,80 @@ func (m ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 			m.borderColor = "7"
 			m.controls = ""
 			m.title = "Fast Catchup"
+			// Return early, skip any checks
+			m.exceptionModal, cmd = m.exceptionModal.HandleMessage(msg)
+			return m, cmd
+		}
 
-		} else if m.Type == app.TransactionModal && m.transactionModal.Participation != nil {
-			// Get the existing account from the state
-			acct, ok := msg.Accounts[m.Address]
-			// If the previous state is not active
-			if ok {
-				if !m.transactionModal.Active {
-					if acct.Participation != nil &&
-						acct.Participation.VoteFirstValid == m.transactionModal.Participation.Key.VoteFirstValid {
-						m.SetActive(true)
-						m.infoModal.Active = true
-						m.infoModal.Prefix = "Successfully registered online!\n"
+		// Get the existing account from the state
+		acct, ok := msg.Accounts[m.Address]
+
+		// Handle suspensions
+		if ok {
+			m.SetSuspended(acct.Participation != nil && acct.Status == "Offline")
+		}
+
+		// We found the account, and we are on one of the modals
+		if ok && m.Type == app.TransactionModal || m.Type == app.InfoModal {
+			// Make sure the transaction modal is set to the current address
+			if m.transactionModal.Participation != nil && m.transactionModal.Participation.Address == acct.Address {
+				// Actual State
+				isOnline := acct.Status == "Online"
+				isActive := acct.Participation != nil
+
+				// Derived State
+				isValid := isOnline && isActive
+				diff, isDifferent, count := participation.HasChanged(*m.transactionModal.Participation, acct.Participation)
+
+				// The account is valid and we registered
+				if isValid && !isDifferent && m.Type == app.TransactionModal && !m.transactionModal.Active {
+					m.SetActive(true)
+					m.infoModal.Prefix = "Successfully registered online!\n"
+					m.HasPrefix = true
+					m.SetType(app.InfoModal)
+					// For the love of all that is good, please lets refactor this. Preferably with a daemon
+				} else if isValid && isDifferent && count != 6 && (m.Type == app.InfoModal || (m.Type == app.TransactionModal && !m.transactionModal.Active)) {
+					// It is online, has a participation key but not the one we are looking at AND all the keys are not different
+					// (AND it's the info modal (this case we are checking on enter) OR we are waiting to register a key, and we made a mistake
+
+					// You know it's getting bad when the plugin recommendation is Grazie
+					// TODO: refactor this beast to have isolated state from the modal controller
+
+					// Ahh yes, classic "Set Active to the inverse then only navigate when there is no prefix"
+					// This is the closest thing we have to state, between this and the transaction modal state it works
+					m.SetActive(false)
+					if m.infoModal.Prefix == "" {
+						m.infoModal.Prefix = "***WARNING***\nRegistered online but keys do not fully match\nCheck your registered keys carefully against the node keys\n\n"
+						if diff.VoteFirstValid {
+							m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: Vote First Valid\n"
+						}
+						if diff.VoteLastValid {
+							m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: Vote Last Valid\n"
+						}
+						if diff.VoteKeyDilution {
+							m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: Vote Key Dilution\n"
+						}
+						if diff.VoteParticipationKey {
+							m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: Vote Key\n"
+						}
+						if diff.SelectionParticipationKey {
+							m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: Selection Key\n"
+						}
+						if diff.StateProofKey {
+							m.infoModal.Prefix = m.infoModal.Prefix + "Mismatched: State Proof Key\n"
+						}
 						m.HasPrefix = true
+
 						m.SetType(app.InfoModal)
 					}
-				} else {
-					if acct.Participation == nil {
-						m.SetActive(false)
-						m.infoModal.Active = false
-						m.transactionModal.Active = false
-						m.SetType(app.InfoModal)
-					}
+				} else if !isOnline && m.Type == app.TransactionModal && m.transactionModal.Active && m.transactionModal.ATxn.VotePK == nil {
+					m.SetActive(false)
+					m.infoModal.Prefix = "Successfully registered offline!\n"
+					m.HasPrefix = true
+					m.SetType(app.InfoModal)
+
 				}
 			}
-
 		}
 
 	case app.ModalEvent:
@@ -176,7 +232,7 @@ func (m ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 		cmds = append(cmds, cmd)
 		m.exceptionModal, cmd = m.exceptionModal.HandleMessage(modalMsg)
 		cmds = append(cmds, cmd)
-		return &m, tea.Batch(cmds...)
+		return m, tea.Batch(cmds...)
 	}
 
 	// Only trigger modal commands when they are active
@@ -195,7 +251,7 @@ func (m ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 	}
 	cmds = append(cmds, cmd)
 
-	return &m, tea.Batch(cmds...)
+	return m, tea.Batch(cmds...)
 }
 
 // Update processes the given message, updates the ViewModel state, and returns the updated model and accompanying commands.

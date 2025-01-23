@@ -102,6 +102,47 @@ func GenerateKeys(
 	}
 }
 
+type Diff struct {
+	VoteFirstValid            bool
+	VoteLastValid             bool
+	VoteKeyDilution           bool
+	VoteParticipationKey      bool
+	SelectionParticipationKey bool
+	StateProofKey             bool
+}
+
+func boolToInt(input bool) int {
+	if input {
+		return 1
+	}
+	return 0
+}
+func HasChanged(part api.ParticipationKey, account *api.AccountParticipation) (Diff, bool, int) {
+	if account == nil {
+		diff := Diff{VoteFirstValid: true, VoteLastValid: true, VoteKeyDilution: true, VoteParticipationKey: true, SelectionParticipationKey: true, StateProofKey: true}
+		return diff, true, 0
+	}
+	diff := Diff{
+		VoteFirstValid:            account.VoteFirstValid != part.Key.VoteFirstValid,
+		VoteLastValid:             account.VoteLastValid != part.Key.VoteLastValid,
+		VoteKeyDilution:           account.VoteKeyDilution != part.Key.VoteKeyDilution,
+		VoteParticipationKey:      !bytes.Equal(account.VoteParticipationKey, part.Key.VoteParticipationKey),
+		SelectionParticipationKey: !bytes.Equal(account.SelectionParticipationKey, part.Key.SelectionParticipationKey),
+		StateProofKey:             !bytes.Equal(*account.StateProofKey, *part.Key.StateProofKey),
+	}
+
+	// Count matches
+	fvMatch := boolToInt(diff.VoteFirstValid)
+	lvMatch := boolToInt(diff.VoteLastValid)
+	kdMatch := boolToInt(diff.VoteKeyDilution)
+	selMatch := boolToInt(diff.SelectionParticipationKey)
+	votMatch := boolToInt(diff.VoteParticipationKey)
+	spkMatch := boolToInt(diff.StateProofKey)
+	matchCount := fvMatch + lvMatch + kdMatch + selMatch + votMatch + spkMatch
+
+	return diff, diff.VoteFirstValid || diff.VoteLastValid || diff.VoteKeyDilution || diff.VoteParticipationKey || diff.SelectionParticipationKey || diff.StateProofKey, matchCount
+}
+
 // Delete remove a key from the node
 func Delete(ctx context.Context, client api.ClientWithResponsesInterface, participationId string) error {
 	deletion, err := client.DeleteParticipationKeyByIDWithResponse(ctx, participationId)
@@ -167,7 +208,7 @@ func GetOnlineShortLink(http api.HttpPkgInterface, part OnlineShortLinkBody) (Sh
 	if err != nil {
 		return response, err
 	}
-	res, err := http.Post("http://b.nodekit.run/online", "applicaiton/json", bytes.NewReader(data))
+	res, err := http.Post("http://b.nodekit.run/online", "application/json", bytes.NewReader(data))
 	if err != nil {
 		return response, err
 	}
@@ -219,6 +260,10 @@ func GetOfflineShortLink(http api.HttpPkgInterface, offline OfflineShortLinkBody
 
 // ToShortLink generates a shortened URL string using the unique
 // identifier from the provided ShortLinkResponse.
-func ToShortLink(link ShortLinkResponse) string {
-	return fmt.Sprintf("https://b.nodekit.run/%s", link.Id)
+func ToShortLink(link ShortLinkResponse, incentiveEligibleFee bool) string {
+	suffix := ""
+	if incentiveEligibleFee {
+		suffix = "i"
+	}
+	return fmt.Sprintf("https://b.nodekit.run/%s%s", link.Id, suffix)
 }

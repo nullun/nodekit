@@ -11,6 +11,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+var minEligibleBalance = 30_000
+var maxEligibleBalance = 70_000_000
+
 type ViewModel struct {
 	Data *algod.StateModel
 
@@ -67,8 +70,8 @@ func (m ViewModel) makeColumns(width int) []table.Column {
 	avgWidth := (width - lipgloss.Width(style.Border.Render("")) - 9) / 5
 	return []table.Column{
 		{Title: "Account", Width: avgWidth},
-		{Title: "Keys", Width: avgWidth},
 		{Title: "Status", Width: avgWidth},
+		{Title: "Rewards", Width: avgWidth},
 		{Title: "Expires", Width: avgWidth},
 		{Title: "Balance", Width: avgWidth},
 	}
@@ -78,11 +81,13 @@ func (m ViewModel) makeRows() *[]table.Row {
 	rows := make([]table.Row, 0)
 
 	for addr := range m.Data.Accounts {
+		expired := false
 		var expires = "N/A"
 		if m.Data.Accounts[addr].Expires != nil {
 			// This condition will only exist for a split second
 			// until algod deletes the key
 			if m.Data.Accounts[addr].Expires.Before(time.Now()) {
+				expired = true
 				expires = "EXPIRED"
 			} else {
 				expires = m.Data.Accounts[addr].Expires.Format(time.RFC822)
@@ -105,10 +110,33 @@ func (m ViewModel) makeRows() *[]table.Row {
 			}
 		}
 
+		status := m.Data.Accounts[addr].Status
+		if status == "Online" && !expired {
+			status = "PARTICIPATING"
+		} else {
+			status = "IDLE"
+		}
+
+		incentiveLevel := ""
+		balance := m.Data.Accounts[addr].Balance
+		if m.Data.Accounts[addr].IncentiveEligible && status == "PARTICIPATING" {
+			if balance >= minEligibleBalance && balance <= maxEligibleBalance {
+				incentiveLevel = "ELIGIBLE"
+			} else {
+				incentiveLevel = "PAUSED"
+			}
+		} else {
+			if status == "PARTICIPATING" {
+				incentiveLevel = "INELIGIBLE"
+			} else {
+				incentiveLevel = ""
+			}
+		}
+
 		rows = append(rows, table.Row{
 			m.Data.Accounts[addr].Address,
-			strconv.Itoa(m.Data.Accounts[addr].Keys),
-			m.Data.Accounts[addr].Status,
+			status,
+			incentiveLevel,
 			expires,
 			strconv.Itoa(m.Data.Accounts[addr].Balance),
 		})

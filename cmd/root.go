@@ -24,6 +24,9 @@ var (
 
 	NeedsUpgrade = false
 
+	// whether the user forbids incentive eligibility fees to be set
+	IncentivesDisabled = false
+
 	// algodEndpoint defines the URI address of the Algorand node, including the protocol (http/https), for client communication.
 	algodData string
 
@@ -53,44 +56,7 @@ var (
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			log.SetOutput(cmd.OutOrStdout())
-			// Create the dependencies
-			ctx := context.Background()
-			client, err := algod.GetClient(algodData)
-			cobra.CheckErr(err)
-			httpPkg := new(api.HttpPkg)
-			t := new(system.Clock)
-			// Fetch the state and handle any creation errors
-			state, stateResponse, err := algod.NewStateModel(ctx, client, httpPkg)
-			utils.WithInvalidResponsesExplanations(err, stateResponse, cmd.UsageString())
-			cobra.CheckErr(err)
-
-			// Construct the TUI Model from the State
-			m, err := ui.NewViewportViewModel(state, client)
-			cobra.CheckErr(err)
-
-			// Construct the TUI Application
-			p := tea.NewProgram(
-				m,
-				tea.WithAltScreen(),
-				tea.WithFPS(120),
-			)
-
-			// Watch for State Updates on a separate thread
-			// TODO: refactor into context aware watcher without callbacks
-			go func() {
-				state.Watch(func(status *algod.StateModel, err error) {
-					if err == nil {
-						p.Send(state)
-					}
-					if err != nil {
-						p.Send(state)
-						p.Send(err)
-					}
-				}, ctx, t)
-			}()
-
-			// Execute the TUI Application
-			_, err = p.Run()
+			err := runTUI(cmd, algodData, IncentivesDisabled)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -127,6 +93,7 @@ func NeedsToBeStopped(cmd *cobra.Command, args []string) {
 // init initializes the application, setting up logging, commands, and version information.
 func init() {
 	log.SetReportTimestamp(false)
+	RootCmd.Flags().BoolVarP(&IncentivesDisabled, "no-incentives", "n", false, style.LightBlue("Disable setting incentive eligibility fees"))
 	RootCmd.SetVersionTemplate(fmt.Sprintf("nodekit-%s-%s@{{.Version}}\n", runtime.GOARCH, runtime.GOOS))
 	// Add Commands
 	if runtime.GOOS != "windows" {
@@ -147,4 +114,50 @@ func Execute(version string, needsUpgrade bool) error {
 	RootCmd.Version = version
 	NeedsUpgrade = needsUpgrade
 	return RootCmd.Execute()
+}
+
+func runTUI(cmd *cobra.Command, dataDir string, incentivesFlag bool) error {
+	if cmd == nil {
+		return fmt.Errorf("cmd is nil")
+	}
+	// Create the dependencies
+	ctx := context.Background()
+	httpPkg := new(api.HttpPkg)
+	t := new(system.Clock)
+	client, err := algod.GetClient(dataDir)
+	cobra.CheckErr(err)
+
+	// Fetch the state and handle any creation errors
+	state, stateResponse, err := algod.NewStateModel(ctx, client, httpPkg, incentivesFlag)
+	utils.WithInvalidResponsesExplanations(err, stateResponse, cmd.UsageString())
+	cobra.CheckErr(err)
+
+	// Construct the TUI Model from the State
+	m, err := ui.NewViewportViewModel(state, client)
+	cobra.CheckErr(err)
+
+	// Construct the TUI Application
+	p := tea.NewProgram(
+		m,
+		tea.WithAltScreen(),
+		tea.WithFPS(120),
+	)
+
+	// Watch for State Updates on a separate thread
+	// TODO: refactor into context aware watcher without callbacks
+	go func() {
+		state.Watch(func(status *algod.StateModel, err error) {
+			if err == nil {
+				p.Send(state)
+			}
+			if err != nil {
+				p.Send(state)
+				p.Send(err)
+			}
+		}, ctx, t)
+	}()
+
+	// Execute the TUI Application
+	_, err = p.Run()
+	return err
 }
