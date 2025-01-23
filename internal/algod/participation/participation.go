@@ -118,6 +118,10 @@ func boolToInt(input bool) int {
 	return 0
 }
 func HasChanged(part api.ParticipationKey, account *api.AccountParticipation) (Diff, bool, int) {
+	if account == nil {
+		diff := Diff{VoteFirstValid: true, VoteLastValid: true, VoteKeyDilution: true, VoteParticipationKey: true, SelectionParticipationKey: true, StateProofKey: true}
+		return diff, true, 0
+	}
 	diff := Diff{
 		VoteFirstValid:            account.VoteFirstValid != part.Key.VoteFirstValid,
 		VoteLastValid:             account.VoteLastValid != part.Key.VoteLastValid,
