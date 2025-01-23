@@ -85,9 +85,7 @@ func (m *ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 
 		// Handle suspensions
 		if ok {
-			if acct.Participation != nil && acct.Status == "Offline" {
-				m.SetSuspended(true)
-			}
+			m.SetSuspended(acct.Participation != nil && acct.Status == "Offline")
 		}
 
 		// We found the account, and we are on one of the modals
@@ -143,6 +141,12 @@ func (m *ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 
 						m.SetType(app.InfoModal)
 					}
+				} else if !isOnline && m.Type == app.TransactionModal && m.transactionModal.Active && m.transactionModal.ATxn.VotePK == nil {
+					m.SetActive(false)
+					m.infoModal.Prefix = "Successfully registered offline!\n"
+					m.HasPrefix = true
+					m.SetType(app.InfoModal)
+
 				}
 			}
 		}
