@@ -142,7 +142,7 @@ func (m *ViewModel) HandleMessage(msg tea.Msg) (*ViewModel, tea.Cmd) {
 						m.SetType(app.InfoModal)
 					}
 				} else if !isOnline && m.Type == app.TransactionModal && m.transactionModal.Active && m.transactionModal.ATxn.VotePK == nil {
-					m.SetActive(true)
+					m.SetActive(false)
 					m.infoModal.Prefix = "Successfully registered offline!\n"
 					m.HasPrefix = true
 					m.SetType(app.InfoModal)
