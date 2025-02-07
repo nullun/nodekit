@@ -4,10 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/algorandfoundation/nodekit/internal/algod/utils"
-	"github.com/algorandfoundation/nodekit/internal/system"
-	"github.com/charmbracelet/log"
-	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"os"
@@ -15,13 +11,18 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/algorandfoundation/nodekit/internal/algod/utils"
+	"github.com/algorandfoundation/nodekit/internal/system"
+	"github.com/charmbracelet/log"
+	"github.com/spf13/cobra"
 )
 
 // MustBeServiceMsg is an error message indicating that a service must be installed to manage it.
 const MustBeServiceMsg = "service must be installed to be able to manage it"
 
 // HomeBrewNotFoundMsg is the error message returned when Homebrew is not detected on the system during execution.
-const HomeBrewNotFoundMsg = "homebrew is not installed. please install Homebrew and try again"
+const HomeBrewNotFoundMsg = "brew not found. please go to https://brew.sh to install Homebrew before trying again"
 
 // IsService check if Algorand service has been created with launchd (macOS)
 // Note that it needs to be run in super-user privilege mode to
