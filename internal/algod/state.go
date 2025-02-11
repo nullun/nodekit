@@ -13,6 +13,9 @@ import (
 // including status, metrics, accounts, keys, and other configurations.
 type StateModel struct {
 
+	// Version indicates the version of the application.
+	Version string
+
 	// Status represents the current status of the algod node,
 	// including network state and round information.
 	Status Status
@@ -56,7 +59,7 @@ type StateModel struct {
 
 // NewStateModel initializes and returns a new StateModel instance
 // along with an API response and potential error.
-func NewStateModel(ctx context.Context, client api.ClientWithResponsesInterface, httpPkg api.HttpPkgInterface, incentivesDisabled bool) (*StateModel, api.ResponseInterface, error) {
+func NewStateModel(ctx context.Context, client api.ClientWithResponsesInterface, httpPkg api.HttpPkgInterface, incentivesDisabled bool, version string) (*StateModel, api.ResponseInterface, error) {
 	// Preload the node status
 	status, response, err := NewStatus(ctx, client, httpPkg)
 	if err != nil {
@@ -79,6 +82,7 @@ func NewStateModel(ctx context.Context, client api.ClientWithResponsesInterface,
 		Admin:    true,
 		Watching: true,
 
+		Version: version,
 		Client:  client,
 		HttpPkg: httpPkg,
 		Context: ctx,
