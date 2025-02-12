@@ -168,8 +168,6 @@ export const lang = "en";
             elem.disabled = false;
             elem.focus();
           }
-        } else {
-          hideResults();
         }
       };
       const sleep = async (ms: number) =>
@@ -179,10 +177,11 @@ export const lang = "en";
       };
       async function lookupNFD(name: string) {
         const resp = await fetch(
-          `https://api.nf.domains/nfd/${name}?view=tiny`
+          `https://api.nf.domains/nfd/${name.toLowerCase()}?view=tiny`
         );
         if (resp.status === 404) throw new Error("NFD Not found");
         const data = await resp.json();
+        if (resp.status >= 400) throw new Error(data?.message ?? `HTTP Error ${resp.status}`);
         const { caAlgo = [], depositAccount, unverifiedCaAlgo = [] } = data;
         const res: Record<string, string> = {};
         if (depositAccount) res[depositAccount] = "Deposit";
