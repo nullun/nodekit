@@ -11,6 +11,7 @@ import (
 
 func GetState(client api.ClientWithResponsesInterface) *algod.StateModel {
 	sm := &algod.StateModel{
+		Version: "vTest",
 		Status: algod.Status{
 			State:                algod.StableState,
 			Version:              "v-test",

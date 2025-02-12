@@ -113,14 +113,19 @@ func (m StatusViewModel) View() string {
 
 	row3 := lipgloss.JoinHorizontal(lipgloss.Left, beginning, middle, end)
 
-	return style.WithTitle("Status", style.ApplyBorder(max(0, size-2), 5, "5").Render(
-		lipgloss.JoinVertical(lipgloss.Left,
-			row1,
-			"",
-			style.Cyan.Render(" -- "+strconv.Itoa(m.Data.Metrics.Window)+" round average --"),
-			row2,
-			row3,
-		)))
+	return style.WithTitles(
+		"( "+style.Red.Render(fmt.Sprintf("Nodekit-%s", m.Data.Version))+" )",
+		lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Render("Status"),
+		style.ApplyBorder(max(0, size-2), 5, "5").Render(
+			lipgloss.JoinVertical(lipgloss.Left,
+				row1,
+				"",
+				style.Cyan.Render(" -- "+strconv.Itoa(m.Data.Metrics.Window)+" round average --"),
+				row2,
+				row3,
+			),
+		),
+	)
 }
 
 // MakeStatusViewModel constructs the model to be used in a tea.Program

@@ -15,6 +15,7 @@ import (
 var statusViewSnapshots = map[string]StatusViewModel{
 	"Syncing": {
 		Data: &algod.StateModel{
+			Version: "v0.0.0-test",
 			Status: algod.Status{
 				LastRound:   1337,
 				NeedsUpdate: true,
@@ -31,6 +32,7 @@ var statusViewSnapshots = map[string]StatusViewModel{
 	},
 	"Hidden": {
 		Data: &algod.StateModel{
+			Version: "v0.0.0-test",
 			Status: algod.Status{
 				LastRound:   1337,
 				NeedsUpdate: true,
@@ -47,6 +49,7 @@ var statusViewSnapshots = map[string]StatusViewModel{
 	},
 	"Loading": {
 		Data: &algod.StateModel{
+			Version: "v0.0.0-test",
 			Status: algod.Status{
 				LastRound:   1337,
 				NeedsUpdate: true,

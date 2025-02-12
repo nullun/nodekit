@@ -56,7 +56,7 @@ var (
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			log.SetOutput(cmd.OutOrStdout())
-			err := runTUI(cmd, algodData, IncentivesDisabled)
+			err := runTUI(cmd, algodData, IncentivesDisabled, cmd.Version)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -116,7 +116,7 @@ func Execute(version string, needsUpgrade bool) error {
 	return RootCmd.Execute()
 }
 
-func runTUI(cmd *cobra.Command, dataDir string, incentivesFlag bool) error {
+func runTUI(cmd *cobra.Command, dataDir string, incentivesFlag bool, version string) error {
 	if cmd == nil {
 		return fmt.Errorf("cmd is nil")
 	}
@@ -128,7 +128,7 @@ func runTUI(cmd *cobra.Command, dataDir string, incentivesFlag bool) error {
 	cobra.CheckErr(err)
 
 	// Fetch the state and handle any creation errors
-	state, stateResponse, err := algod.NewStateModel(ctx, client, httpPkg, incentivesFlag)
+	state, stateResponse, err := algod.NewStateModel(ctx, client, httpPkg, incentivesFlag, version)
 	utils.WithInvalidResponsesExplanations(err, stateResponse, cmd.UsageString())
 	cobra.CheckErr(err)
 
