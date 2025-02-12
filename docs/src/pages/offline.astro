@@ -217,7 +217,7 @@ export const lang = "en";
       <div
         class="relative w-full xl:max-w-7xl flex flex-col items-center lg:px-4"
       >
-        <div class="absolute w-full flex justify-between items-center">
+        <div class="absolute w-full flex justify-between items-center z-10">
           <a href="/"
             ><img
               src="/nodekit.png"
@@ -246,14 +246,14 @@ export const lang = "en";
           </a>
         </div>
         <div
-          class="w-full h-svh mx-4 flex flex-col"
+          class="relative w-full h-svh mx-4 flex flex-col z-5"
           style={{ justifyContent: "safe center" }}
         >
           <div
             class="w-full mt-14 flex gap-10 flex-col items-center justify-center px-6 pb-10"
           >
-            <div class="font-bold text-xl text-[#a9a9f6]">
-              Quick <span class="text-white/90">keyreg offline</span> tool
+            <div class="font-bold text-xl text-[#a9a9f6] w-[100vw] -m-6 p-6 bg-[#001324]/90 backdrop-filter-blur-sm z-20 flex justify-center">
+              <span>Quick <span class="text-white/90">keyreg offline</span> tool</span>
             </div>
             <input
               type="text"
