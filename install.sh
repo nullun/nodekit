@@ -54,7 +54,8 @@ prompt_default_no() {
 
 if [ -f nodekit ]; then
   warn "A nodekit file already exists in the current directory."
-  if prompt_default_no "Do you want to upgrade it to the latest nodekit?"; then
+  # Set the NODEKIT_FORCE_INSTALL environment variable to anything in order to force upgrading nodekit without prompting
+  if [[ -n "${NODEKIT_FORCE_INSTALL-}" ]] || prompt_default_no "Do you want to upgrade it to the latest nodekit?"; then
     rm nodekit
   else
     info "Not upgrading nodekit.\n\nYou can run nodekit with:\n\n./nodekit\n\nOr start the installer with:\n\n./nodekit bootstrap"
@@ -103,8 +104,12 @@ trap - exit
 success "Downloaded: ${Bold_Green}${target} as nodekit 🎉${Reset}"
 info "Explore all nodekit options with:"
 echo "./nodekit --help"
-echo ""
-info "Starting nodekit bootstrap"
-echo "./nodekit bootstrap"
 
-./nodekit bootstrap
+# Set the NODEKIT_SKIP_BOOTSTRAP environment variable to anything in order to skip bootstrap
+# Useful for non-interactive setup
+if [[ -z "${NODEKIT_SKIP_BOOTSTRAP-}" ]]; then
+  echo ""
+  info "Starting nodekit bootstrap"
+  echo "./nodekit bootstrap"
+  ./nodekit bootstrap
+fi
