@@ -59,6 +59,30 @@ func WithTitle(title string, view string) string {
 	}
 	return view
 }
+func WithTitles(leftText string, rightText string, view string) string {
+	if leftText == "" || rightText == "" {
+		return view
+	}
+
+	pad := 4
+	controlWidth := lipgloss.Width(leftText) + lipgloss.Width(rightText)
+
+	lines := strings.Split(view, "\n")
+
+	if lipgloss.Width(view) >= controlWidth+(2*pad) {
+		line := lines[0]
+		lineWidth := lipgloss.Width(line)
+		lineLeft := ansi.Truncate(line, pad, "") + leftText
+		lineRight := rightText + TruncateLeft(line, lineWidth-pad)
+
+		midTemplate := TruncateLeft(line, pad)
+		midLen := lineWidth - lipgloss.Width(lineLeft) - lipgloss.Width(lineRight)
+		midLine := ansi.Truncate(midTemplate, midLen, "")
+		lines[0] = lineLeft + midLine + lineRight
+	}
+	return strings.Join(lines, "\n")
+}
+
 func WithControls(nav string, view string) string {
 	if nav == "" {
 		return view
