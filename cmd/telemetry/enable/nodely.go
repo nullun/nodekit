@@ -14,7 +14,7 @@ import (
 	"os"
 )
 
-var nodelyShort = "Disable Nodely"
+var nodelyShort = "Enable Nodely telemetry profile"
 var nodelyLong = lipgloss.JoinVertical(
 	lipgloss.Left,
 	style.Purple(style.BANNER),
@@ -22,7 +22,7 @@ var nodelyLong = lipgloss.JoinVertical(
 	style.Bold(nodelyShort),
 	"",
 	style.BoldUnderline("Overview:"),
-	"Configure telemetry for the Algorand daemon.",
+	"Enable the Nodely telemetry profile for the Algorand daemon.",
 	"",
 	style.Yellow.Render(explanations.ExperimentalWarning),
 )
@@ -43,7 +43,9 @@ Enabling telemetry will configure your node to send health metrics to Nodely
 
 > Tip: Keep this GUID identifier private if you do not want this information to be linked to your identity.
 
-**Do you want to enable telemetry with the nodely provider? (y/n)**
+Nodely Telemetry Documentation: https://nodely.io/docs/public/telemetry/
+
+**Do you want to enable telemetry with the Nodely provider? (y/n)**
 `
 
 var nodelyCmd = cmdutils.WithAlgodFlags(&cobra.Command{
