@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/algorandfoundation/nodekit/api"
 	"github.com/algorandfoundation/nodekit/internal/algod"
+	"github.com/algorandfoundation/nodekit/ui/utils"
 	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textinput"
 )
@@ -26,14 +27,14 @@ const (
 
 var RangeDefaults = map[Range]string{
 	Day:   "30",
-	Month: "",
-	Round: "",
+	Month: "1",
+	Round: "1000000",
 }
 
 var RangePlaceholders = map[Range]string{
-	Day:   fmt.Sprintf("Length of time (default: %s days)", RangeDefaults[Day]),
-	Month: "Length of time",
-	Round: "Length of time",
+	Day:   fmt.Sprintf(" (default: %s %s)", RangeDefaults[Day], utils.PluralString("day", RangeDefaults[Day])),
+	Month: fmt.Sprintf(" (default: %s %s)", RangeDefaults[Month], utils.PluralString("month", RangeDefaults[Month])),
+	Round: fmt.Sprintf(" (default: %s %s)", RangeDefaults[Round], utils.PluralString("round", RangeDefaults[Round])),
 }
 
 type ViewModel struct {
