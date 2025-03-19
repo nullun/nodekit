@@ -2,6 +2,7 @@
 │ Account        Status         Rewards        Expires        Balance          │
 │───────────────────────────────────────────────────────────────────────────   │
 │ ABC            IDLE                          N/A            0                │
+│ EXPIRED        IDLE                          N/A            0                │
 │                                                                              │
 │                                                                              │
 │                                                                              │
@@ -36,5 +37,4 @@
 │                                                                              │
 │                                                                              │
 │                                                                              │
-│                                                                              │
-╰────( Insufficient Data )──────────────────────────────| accounts | keys |────╯
+╰────( Insufficient Data )─────────────────────────| -> | accounts | keys |────╯

@@ -25,4 +25,5 @@ Note: This is still a work in progress. Expect bugs and rough edges.
 
 * [nodekit](/README.md)	 - Manage Algorand nodes from the command line
 * [nodekit configure service](/man/nodekit_configure_service.md)	 - Install service files for the Algorand daemon.
+* [nodekit configure telemetry](/man/nodekit_configure_telemetry.md)	 - Configure telemetry for the Algorand daemon
 

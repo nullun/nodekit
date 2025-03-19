@@ -6,11 +6,13 @@ import (
 	"github.com/algorandfoundation/nodekit/api"
 	"github.com/algorandfoundation/nodekit/cmd/catchup"
 	"github.com/algorandfoundation/nodekit/cmd/configure"
+	"github.com/algorandfoundation/nodekit/cmd/telemetry"
 	"github.com/algorandfoundation/nodekit/cmd/utils"
 	"github.com/algorandfoundation/nodekit/cmd/utils/explanations"
 	"github.com/algorandfoundation/nodekit/internal/algod"
 	"github.com/algorandfoundation/nodekit/internal/system"
 	"github.com/algorandfoundation/nodekit/ui"
+	"github.com/algorandfoundation/nodekit/ui/app"
 	"github.com/algorandfoundation/nodekit/ui/style"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -106,6 +108,7 @@ func init() {
 		RootCmd.AddCommand(upgradeCmd)
 		RootCmd.AddCommand(catchup.Cmd)
 		RootCmd.AddCommand(configure.Cmd)
+		RootCmd.AddCommand(telemetry.Cmd)
 	}
 }
 
@@ -131,9 +134,8 @@ func runTUI(cmd *cobra.Command, dataDir string, incentivesFlag bool, version str
 	state, stateResponse, err := algod.NewStateModel(ctx, client, httpPkg, incentivesFlag, version)
 	utils.WithInvalidResponsesExplanations(err, stateResponse, cmd.UsageString())
 	cobra.CheckErr(err)
-
 	// Construct the TUI Model from the State
-	m, err := ui.NewViewportViewModel(state, client)
+	m, err := ui.NewViewportViewModel(state)
 	cobra.CheckErr(err)
 
 	// Construct the TUI Application
@@ -146,7 +148,21 @@ func runTUI(cmd *cobra.Command, dataDir string, incentivesFlag bool, version str
 	// Watch for State Updates on a separate thread
 	// TODO: refactor into context aware watcher without callbacks
 	go func() {
+		// Check if the instance is lagging
+		lagging, err := algod.IsLagging(httpPkg, state.Status.LastRound, state.Status.Network)
+		if err != nil {
+			cobra.CheckErr(err)
+		}
 		state.Watch(func(status *algod.StateModel, err error) {
+			// Handle Fast Catchup
+			if state.Status.State == algod.FastCatchupState {
+				p.Send(app.CatchupModal)
+				lagging = false
+			} else if lagging && status.Status.State != algod.FastCatchupState {
+				p.Send(app.LaggingModal)
+				lagging = false
+			}
+
 			if err == nil {
 				p.Send(state)
 			}
