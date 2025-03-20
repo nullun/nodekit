@@ -77,6 +77,7 @@ func GenerateKeys(
 	}
 
 	// 😠 - Zero 2024
+	timeoutTimer := time.After(20 * time.Minute)
 	for {
 		select {
 		case <-ctx.Done():
@@ -96,7 +97,7 @@ func GenerateKeys(
 					return &k, nil
 				}
 			}
-		case <-time.After(20 * time.Minute):
+		case <-timeoutTimer:
 			return nil, errors.New("timeout waiting for key to be created")
 		}
 	}

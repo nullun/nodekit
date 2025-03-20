@@ -3,8 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/algorandfoundation/nodekit/api"
 	"github.com/algorandfoundation/nodekit/cmd/utils/explanations"
 	"github.com/algorandfoundation/nodekit/internal/algod"
@@ -17,6 +15,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
+	"time"
 )
 
 const CheckAlgodInterval = 10 * time.Second
@@ -69,7 +68,6 @@ var bootstrapCmd = &cobra.Command{
 			}
 
 			// Wait for the client to respond
-			log.Warn(style.Yellow.Render("Waiting for the node to start..."))
 			client, err = algod.WaitForClient(context.Background(), dir, CheckAlgodInterval, CheckAlgodTimeout)
 			if err != nil {
 				log.Fatal(err)
@@ -168,22 +166,6 @@ var bootstrapCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-
-			// Parse the data directory
-			dir, err := algod.GetDataDir("")
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// Wait for the client to respond
-			client, err = algod.WaitForClient(context.Background(), dir, CheckAlgodInterval, CheckAlgodTimeout)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			if !algod.IsRunning() {
-				log.Fatal("algod is not running. Something went wrong with installation")
-			}
 		} else {
 			// This should not happen but just in case, ensure it is running
 			if !algod.IsRunning() {
@@ -192,18 +174,26 @@ var bootstrapCmd = &cobra.Command{
 				if err != nil {
 					log.Fatal(err)
 				}
-				log.Info(style.Green.Render("Algorand started successfully 🎉"))
-				time.Sleep(2 * time.Second)
 			}
 		}
 
-		// Find the data directory automatically
+		// Parse the data directory
 		dataDir, err := algod.GetDataDir("")
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// Wait for the client to respond
 		client, err = algod.WaitForClient(context.Background(), dataDir, CheckAlgodInterval, CheckAlgodTimeout)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		if !algod.IsRunning() {
+			log.Fatal("algod is not running. Something went wrong with installation")
+		}
+
+		log.Info(style.Green.Render("Algorand node started successfully 🎉"))
 
 		// User answer for catchup question
 		if msg.Catchup {

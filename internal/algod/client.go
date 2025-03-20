@@ -3,8 +3,10 @@ package algod
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/algorandfoundation/nodekit/api"
 	"github.com/algorandfoundation/nodekit/internal/algod/utils"
+	"github.com/charmbracelet/log"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/securityprovider"
 	"os"
 	"path/filepath"
@@ -13,7 +15,7 @@ import (
 )
 
 const InvalidDataDirMsg = "invalid data directory"
-const ClientTimeoutMsg = "the client has timed out"
+const ClientTimeoutMsg = "timed out while waiting for the node"
 
 func GetDataDir(dataDir string) (string, error) {
 	envDataDir := os.Getenv("ALGORAND_DATA")
@@ -64,6 +66,7 @@ func GetClient(dataDir string) (*api.ClientWithResponses, error) {
 func WaitForClient(ctx context.Context, dataDir string, interval time.Duration, timeout time.Duration) (*api.ClientWithResponses, error) {
 	var client *api.ClientWithResponses
 	var err error
+	log.Info(fmt.Sprintf("Waiting for the node (up to %s)", timeout))
 	dataDir, err = GetDataDir(dataDir)
 	if err != nil {
 		return client, err
@@ -78,6 +81,7 @@ func WaitForClient(ctx context.Context, dataDir string, interval time.Duration, 
 		}
 	}
 	// Wait for client to respond
+	timeoutTimer := time.After(timeout)
 	for {
 		select {
 		case <-ctx.Done():
@@ -91,9 +95,8 @@ func WaitForClient(ctx context.Context, dataDir string, interval time.Duration, 
 					return client, nil
 				}
 			}
-		case <-time.After(timeout):
+		case <-timeoutTimer:
 			return client, errors.New(ClientTimeoutMsg)
 		}
-
 	}
 }

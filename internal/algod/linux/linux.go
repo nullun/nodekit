@@ -8,7 +8,9 @@ import (
 	"github.com/charmbracelet/log"
 	"os"
 	"os/exec"
+	"os/user"
 	"runtime"
+	"strconv"
 	"strings"
 	"text/template"
 )
@@ -22,6 +24,20 @@ type Algod struct {
 	system.Interface
 	Path              string
 	DataDirectoryPath string
+}
+
+func hasConflictingUser() bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+	algorandUser, _ := user.Lookup("algorand")
+	if algorandUser != nil {
+		uid, _ := strconv.Atoi(algorandUser.Uid)
+		if uid >= 1000 {
+			return true
+		}
+	}
+	return false
 }
 
 // InstallRequirements generates installation commands for "sudo" based on the detected package manager and system state.
@@ -47,7 +63,12 @@ func InstallRequirements() system.CmdsList {
 
 // Install installs Algorand development tools or node software depending on the package manager.
 func Install() error {
+	if hasConflictingUser() {
+		return fmt.Errorf("Your system has a user called \"algorand\". The algorand node requires the \"algorand\" username for internal usage. Rename or remove the algorand user to continue.")
+	}
+
 	log.Info("Installing Algod on Linux")
+
 	// Based off of https://developer.algorand.org/docs/run-a-node/setup/install/#installation-with-a-package-manager
 	if system.CmdExists("apt-get") { // On some Debian systems we use apt-get
 		log.Info("Installing with apt-get")
