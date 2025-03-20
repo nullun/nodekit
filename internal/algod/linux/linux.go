@@ -64,7 +64,7 @@ func InstallRequirements() system.CmdsList {
 // Install installs Algorand development tools or node software depending on the package manager.
 func Install() error {
 	if hasConflictingUser() {
-		log.Fatal("Your system has a user called \"algorand\". The algorand node requires the \"algorand\" username for internal usage. Rename or remove the algorand user to continue.")
+		return fmt.Errorf("Your system has a user called \"algorand\". The algorand node requires the \"algorand\" username for internal usage. Rename or remove the algorand user to continue.")
 	}
 
 	log.Info("Installing Algod on Linux")
