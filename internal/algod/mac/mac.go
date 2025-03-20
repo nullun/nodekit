@@ -36,7 +36,7 @@ func IsService() bool {
 // configures necessary directories, and ensures it
 // runs as a background service.
 func Install() error {
-	log.Info("Installing Algod on macOS...")
+	log.Info("Installing Algod on macOS")
 
 	// Homebrew is our package manager of choice
 	if !system.CmdExists("brew") {
