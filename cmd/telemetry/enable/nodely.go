@@ -85,6 +85,8 @@ var nodelyCmd = cmdutils.WithAlgodFlags(&cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
+
+			log.Info("Telemetry enabled. To see your Nodely dashboard URL, run:\n    ./nodekit telemetry status")
 		}
 	},
 }, &dataDir)
