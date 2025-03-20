@@ -194,7 +194,6 @@ var bootstrapCmd = &cobra.Command{
 		}
 
 		log.Info(style.Green.Render("Algorand node started successfully 🎉"))
-		time.Sleep(2 * time.Second)
 
 		// User answer for catchup question
 		if msg.Catchup {
