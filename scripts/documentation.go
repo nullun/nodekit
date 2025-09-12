@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/algorandfoundation/nodekit/cmd"
-	"github.com/algorandfoundation/nodekit/ui/style"
-	"github.com/charmbracelet/x/ansi"
-	"github.com/spf13/cobra/doc"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/algorandfoundation/nodekit/cmd"
+	"github.com/algorandfoundation/nodekit/ui/style"
+	"github.com/charmbracelet/x/ansi"
+	"github.com/spf13/cobra/doc"
 )
 
 const (
@@ -333,7 +334,7 @@ func main() {
 	mergedList += "###### Auto"
 
 	// Replace the TOC with the full list of commands
-	err = replaceBetweenStrings(fmt.Sprintf("%s/nodekit.md", DEVPORTAL_PATH), "### SEE ALSO", "###### Auto", mergedList)
+	err = replaceBetweenStrings(fmt.Sprintf("%s/commands.md", DEVPORTAL_PATH), "### SEE ALSO", "###### Auto", mergedList)
 	if err != nil {
 		panic(err)
 	}
