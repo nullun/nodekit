@@ -64,18 +64,13 @@ func (m ViewModel) Account() *algod.Account {
 	return nil
 }
 
-func (m ViewModel) IsIncentiveProtocol() bool {
-	return m.State.Status.LastProtocolVersion == "https://github.com/algorandfoundation/specs/tree/236dcc18c9c507d794813ab768e467ea42d1b4d9"
-}
-
 // Whether the 2A incentive fee should be added
 func (m ViewModel) ShouldAddIncentivesFee() bool {
 	// conditions for 2A fee:
 	// 1) incentives allowed by user: command line flag to disable incentives has not been passed
 	// 2) online keyreg
-	// 3) protocol supports incentives
-	// 4) account is not already incentives eligible
-	return m.State != nil && !m.State.IncentivesDisabled && !m.OfflineControls && m.IsIncentiveProtocol() && m.Account() != nil && !m.Account().IncentiveEligible
+	// 3) account is not already incentives eligible
+	return m.State != nil && !m.State.IncentivesDisabled && !m.OfflineControls && m.Account() != nil && !m.Account().IncentiveEligible
 }
 
 func (m *ViewModel) UpdateState() {
