@@ -192,6 +192,68 @@ func WriteLogConfigToDataDir(path string, logConfig *telemetry.Config) error {
 	return nil
 }
 
+// GetConfigFromDataDir reads a node configuration file from the
+// specific data directory and unmarshals it into a config.Config.
+func GetConfigFromDataDir(path string) (*config.Config, error) {
+	var algodConfig config.Config
+
+	file, err := os.ReadFile(filepath.Join(path, "config.json"))
+	if err != nil {
+		return &algodConfig, err
+	}
+
+	err = json.Unmarshal(file, &algodConfig)
+	if err != nil {
+		return &algodConfig, err
+	}
+
+	return &algodConfig, nil
+}
+
+// WriteConfigToDataDir writes the provided node configuration to a file in the specified data directory.
+// The configuration is formatted as indented JSON and saved to a file named "config.json".
+func WriteConfigToDataDir(path string, algodConfig *config.Config) error {
+	// Read an existing config and unmarshal it into a map, or make a new map.
+	var currentConfigMap map[string]json.RawMessage
+	file, err := os.ReadFile(filepath.Join(path, "config.json"))
+	if err == nil {
+		if err := json.Unmarshal(file, &currentConfigMap); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	} else {
+		currentConfigMap = make(map[string]json.RawMessage)
+	}
+
+	// We only want user-defined values (non-nil), so omitempty removes
+	// everything else when unmarshaling into newConfigMap.
+	tempConfigMap, err := json.Marshal(algodConfig)
+	if err != nil {
+		return err
+	}
+	var newConfigMap map[string]json.RawMessage
+	if err := json.Unmarshal(tempConfigMap, &newConfigMap); err != nil {
+		return err
+	}
+
+	// Update currentConfigMap with user-defined values.
+	for key, value := range newConfigMap {
+		currentConfigMap[key] = value
+	}
+
+	// Marshal and save the new config
+	newConfig, err := json.MarshalIndent(currentConfigMap, "", "\t")
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(filepath.Join(path, "config.json"), newConfig, 0o644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // ReplaceEndpointUrl replaces newline characters and wildcard IP addresses in a URL with a specific local address.
 func ReplaceEndpointUrl(s string) string {
 	s = strings.Replace(s, "\n", "", -1)
