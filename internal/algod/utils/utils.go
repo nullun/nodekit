@@ -3,14 +3,16 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/algorandfoundation/nodekit/internal/algod/telemetry"
-	"github.com/algorandfoundation/nodekit/internal/system"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/algorandfoundation/nodekit/internal/algod/config"
+	"github.com/algorandfoundation/nodekit/internal/algod/telemetry"
+	"github.com/algorandfoundation/nodekit/internal/system"
+	"github.com/spf13/cobra"
 )
 
 const AlgodNetEndpointFileMissingAddress = "missing://endpoint"
@@ -46,7 +48,8 @@ func ToDataFolderConfig(path string) (DataFolderConfig, error) {
 	return dataFolderConfig, nil
 }
 
-// IsDataDir determines if the specified path is a valid Algorand data directory containing an "algod.token" file.
+// IsDataDir determines if the specified path is a valid Algorand
+// data directory containing the "genesis.json" file.
 func IsDataDir(path string) bool {
 	info, err := os.Stat(path)
 
@@ -60,11 +63,9 @@ func IsDataDir(path string) bool {
 		return false
 	}
 
-	paths := system.FindPathToFile(path, "algod.token")
-	if len(paths) == 1 {
-		return true
-	}
-	return false
+	genesisFile := filepath.Join(path, "genesis.json")
+	_, err = os.Stat(genesisFile)
+	return err == nil
 }
 
 // GetKnownDataPaths Does a lazy check for Algorand data directories, based off of known common paths
