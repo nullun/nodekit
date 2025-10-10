@@ -3,13 +3,14 @@ package system
 import (
 	"errors"
 	"fmt"
-	"github.com/algorandfoundation/nodekit/ui/style"
-	"github.com/charmbracelet/log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/algorandfoundation/nodekit/ui/style"
+	"github.com/charmbracelet/log"
 )
 
 // IsSudo checks if the process is running with root privileges by verifying the effective user ID is 0.
@@ -94,7 +95,7 @@ func FindPathToFile(startDir string, targetFileName string) []string {
 	worker := func() {
 		defer wg.Done()
 		for path := range fileChan {
-			info, err := os.Stat(path)
+			info, err := os.Stat(filepath.Join(path, targetFileName))
 			if err != nil {
 				continue
 			}
