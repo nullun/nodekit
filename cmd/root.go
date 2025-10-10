@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"runtime"
+
 	"github.com/algorandfoundation/nodekit/api"
 	"github.com/algorandfoundation/nodekit/cmd/catchup"
 	"github.com/algorandfoundation/nodekit/cmd/configure"
@@ -18,7 +20,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
-	"runtime"
 )
 
 var (
@@ -74,7 +75,7 @@ func NeedsToBeRunning(cmd *cobra.Command, args []string) {
 	if !algod.IsInstalled() {
 		log.Fatal(explanations.NotInstalledErrorMsg)
 	}
-	if !algod.IsRunning() {
+	if !algod.IsRunning(algodData) {
 		log.Fatal(explanations.NotRunningErrorMsg)
 	}
 }
@@ -87,7 +88,7 @@ func NeedsToBeStopped(cmd *cobra.Command, args []string) {
 	if !algod.IsInstalled() {
 		log.Fatal(explanations.NotInstalledErrorMsg)
 	}
-	if algod.IsRunning() {
+	if algod.IsRunning(algodData) {
 		log.Fatal(explanations.RunningErrorMsg)
 	}
 }

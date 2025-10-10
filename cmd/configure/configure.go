@@ -3,17 +3,17 @@ package configure
 import (
 	"bytes"
 	"fmt"
-	"github.com/algorandfoundation/nodekit/cmd/utils/explanations"
-	"github.com/algorandfoundation/nodekit/internal/algod"
-	"github.com/algorandfoundation/nodekit/internal/algod/utils"
-	"github.com/algorandfoundation/nodekit/ui/style"
-	"github.com/charmbracelet/lipgloss"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 	"text/template"
 
+	"github.com/algorandfoundation/nodekit/cmd/utils/explanations"
+	"github.com/algorandfoundation/nodekit/internal/algod"
+	"github.com/algorandfoundation/nodekit/internal/algod/utils"
+	"github.com/algorandfoundation/nodekit/ui/style"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 )
 
@@ -33,6 +33,8 @@ var long = lipgloss.JoinVertical(
 	style.Yellow.Render(explanations.ExperimentalWarning),
 )
 
+var algodData = ""
+
 var Cmd = &cobra.Command{
 	Use:   "configure",
 	Short: short,
@@ -50,7 +52,7 @@ const RunningErrorMsg = "algorand is currently running. Please stop the node wit
 func configureNode() error {
 	var systemServiceConfigure bool
 
-	if algod.IsRunning() {
+	if algod.IsRunning(algodData) {
 		return fmt.Errorf(RunningErrorMsg)
 	}
 

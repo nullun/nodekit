@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var dataDir = ""
 var telemetryEndpoint string
 var telemetryName string
 var telemetryDisable bool
@@ -42,7 +41,7 @@ var telemetryCmd = cmdutils.WithAlgodFlags(&cobra.Command{
 	PersistentPreRunE: cmdutils.IsSudoCmd,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Warn(style.Yellow.Render(explanations.SudoWarningMsg))
-		resolvedDir, err := algod.GetDataDir(dataDir)
+		resolvedDir, err := algod.GetDataDir(algodData)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -116,7 +115,7 @@ var telemetryCmd = cmdutils.WithAlgodFlags(&cobra.Command{
 		}
 		log.Debug("Node restarted successfully.")
 	},
-}, &dataDir)
+}, &algodData)
 
 func init() {
 	telemetryCmd.Flags().BoolVarP(&telemetryDisable, "disable", "", false, "Disables telemetry")

@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/algorandfoundation/nodekit/api"
 	"github.com/algorandfoundation/nodekit/cmd/utils/explanations"
 	"github.com/algorandfoundation/nodekit/internal/algod"
@@ -15,7 +17,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 const CheckAlgodInterval = 10 * time.Second
@@ -60,7 +61,7 @@ var bootstrapCmd = &cobra.Command{
 		model := bootstrap.NewModel()
 		log.Warn(style.Yellow.Render(explanations.SudoWarningMsg))
 		// Try to launch the TUI if it's already running and configured
-		if algod.IsInitialized() {
+		if algod.IsInitialized(algodData) {
 			// Parse the data directory
 			dir, err := algod.GetDataDir("")
 			if err != nil {
@@ -119,7 +120,7 @@ var bootstrapCmd = &cobra.Command{
 
 		// Ensure it the service is started,
 		// in this case we won't be able to query state without the node running
-		if algod.IsInstalled() && algod.IsService() && !algod.IsRunning() {
+		if algod.IsInstalled() && algod.IsService() && !algod.IsRunning(algodData) {
 			log.Debug("Algorand is installed, but not running. Attempting to start it automatically.")
 			log.Warn(style.Yellow.Render(explanations.SudoWarningMsg))
 			err := algod.Start()
@@ -168,7 +169,7 @@ var bootstrapCmd = &cobra.Command{
 			}
 		} else {
 			// This should not happen but just in case, ensure it is running
-			if !algod.IsRunning() {
+			if !algod.IsRunning(algodData) {
 				log.Info(style.Green.Render("Starting Algod 🚀"))
 				err := algod.Start()
 				if err != nil {
@@ -189,7 +190,7 @@ var bootstrapCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		if !algod.IsRunning() {
+		if !algod.IsRunning(algodData) {
 			log.Fatal("algod is not running. Something went wrong with installation")
 		}
 

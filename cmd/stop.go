@@ -1,13 +1,13 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/algorandfoundation/nodekit/cmd/utils/explanations"
 	"github.com/algorandfoundation/nodekit/internal/algod"
 	"github.com/algorandfoundation/nodekit/ui/style"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
-	"time"
-
 	"github.com/spf13/cobra"
 )
 
@@ -52,7 +52,7 @@ var stopCmd = &cobra.Command{
 		}
 		time.Sleep(StopTimeout)
 
-		if algod.IsRunning() {
+		if algod.IsRunning(algodData) {
 			log.Fatal(StopFailureMsg)
 		}
 
