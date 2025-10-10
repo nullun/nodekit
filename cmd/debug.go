@@ -75,7 +75,7 @@ var debugCmd = cmdutils.WithAlgodFlags(&cobra.Command{
 
 		path, _ := exec.LookPath("algod")
 
-		dataDir, err := algod.GetDataDir("")
+		dataDir, err := algod.GetDataDir(algodData)
 		if err != nil {
 			return err
 		}

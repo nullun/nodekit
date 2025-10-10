@@ -63,7 +63,7 @@ var bootstrapCmd = &cobra.Command{
 		// Try to launch the TUI if it's already running and configured
 		if algod.IsInitialized(algodData) {
 			// Parse the data directory
-			dir, err := algod.GetDataDir("")
+			dir, err := algod.GetDataDir(algodData)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -98,7 +98,7 @@ var bootstrapCmd = &cobra.Command{
 
 		// Exit the application in an invalid state
 		if algod.IsInstalled() && !algod.IsService() {
-			dataDir, _ := algod.GetDataDir("")
+			dataDir, _ := algod.GetDataDir(algodData)
 			if dataDir == "" {
 				dataDir = "<Path to data directory>"
 			}
@@ -179,7 +179,7 @@ var bootstrapCmd = &cobra.Command{
 		}
 
 		// Parse the data directory
-		dataDir, err := algod.GetDataDir("")
+		dataDir, err := algod.GetDataDir(algodData)
 		if err != nil {
 			log.Fatal(err)
 		}
