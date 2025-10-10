@@ -110,7 +110,7 @@ func GetExpiresTime(t system.Time, lastRound int, roundTime time.Duration, voteL
 func GetTokenFromDataDir(path string) (string, error) {
 	var token string
 
-	file, err := os.ReadFile(path + "/algod.admin.token")
+	file, err := os.ReadFile(filepath.Join(path, "algod.admin.token"))
 	if err != nil {
 		return token, err
 	}
@@ -121,7 +121,7 @@ func GetTokenFromDataDir(path string) (string, error) {
 
 func GetNetworkFromDataDir(path string) (string, error) {
 	var network string
-	file, err := os.ReadFile(path + "/genesis.json")
+	file, err := os.ReadFile(filepath.Join(path, "genesis.json"))
 	if err != nil {
 		return network, err
 	}
@@ -138,7 +138,7 @@ func GetNetworkFromDataDir(path string) (string, error) {
 
 func GetPidFromDataDir(path string) (int, error) {
 	var pid int
-	file, err := os.ReadFile(path + "/algod.pid")
+	file, err := os.ReadFile(filepath.Join(path, "algod.pid"))
 	if err != nil {
 		return pid, err
 	}
@@ -153,7 +153,7 @@ func GetPidFromDataDir(path string) (int, error) {
 
 func GetEndpointFromDataDir(path string) (string, error) {
 	var endpoint string
-	file, err := os.ReadFile(path + "/algod.net")
+	file, err := os.ReadFile(filepath.Join(path, "algod.net"))
 	if err != nil {
 		return AlgodNetEndpointFileMissingAddress, nil
 	}
@@ -167,7 +167,7 @@ func GetEndpointFromDataDir(path string) (string, error) {
 // specified data directory and unmarshals it into a telemetry.Config.
 func GetLogConfigFromDataDir(path string) (*telemetry.Config, error) {
 	var logConfig telemetry.Config
-	file, err := os.ReadFile(path + "/logging.config")
+	file, err := os.ReadFile(filepath.Join(path, "logging.config"))
 	if err != nil {
 		return &logConfig, err
 	}
@@ -185,7 +185,7 @@ func WriteLogConfigToDataDir(path string, logConfig *telemetry.Config) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(path+"/logging.config", file, 0644)
+	err = os.WriteFile(filepath.Join(path, "logging.config"), file, 0o644)
 	if err != nil {
 		return err
 	}
