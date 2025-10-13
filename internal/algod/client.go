@@ -19,26 +19,26 @@ const InvalidDataDirMsg = "invalid data directory"
 const ClientTimeoutMsg = "timed out while waiting for the node"
 
 func GetDataDir(dataDir string) (string, error) {
-	resolvedDir := os.Getenv("ALGORAND_DATA")
+	// Priority:
+	// 1. Use provided `-d` directory
+	// 2. Use environment variable `ALGORAND_DATA`
+	// 3. Use default given by nodekit
+	if dataDir == "" {
+		dataDir = os.Getenv("ALGORAND_DATA")
 
-	if dataDir != "" {
-		resolvedDir = dataDir
-	} else if resolvedDir == "" {
-
-		var defaultDataDir string
-		switch runtime.GOOS {
-		case "darwin":
-			defaultDataDir = filepath.Join(os.Getenv("HOME"), ".algorand")
-		case "linux":
-			defaultDataDir = "/var/lib/algorand"
-		default:
-			return "", errors.New(UnsupportedOSError)
+		if dataDir == "" {
+			switch runtime.GOOS {
+			case "darwin":
+				dataDir = filepath.Join(os.Getenv("HOME"), ".algorand")
+			case "linux":
+				dataDir = "/var/lib/algorand"
+			default:
+				return "", errors.New(UnsupportedOSError)
+			}
 		}
-
-		resolvedDir = defaultDataDir
 	}
 
-	return resolvedDir, nil
+	return dataDir, nil
 }
 
 // GetClient initializes and returns a new API client configured with the provided endpoint and access token.
