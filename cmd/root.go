@@ -120,7 +120,7 @@ func Execute(version string, needsUpgrade bool) error {
 	return RootCmd.Execute()
 }
 
-func runTUI(cmd *cobra.Command, dataDir string, incentivesFlag bool, version string) error {
+func runTUI(cmd *cobra.Command, algodData string, incentivesFlag bool, version string) error {
 	if cmd == nil {
 		return fmt.Errorf("cmd is nil")
 	}
@@ -128,11 +128,16 @@ func runTUI(cmd *cobra.Command, dataDir string, incentivesFlag bool, version str
 	ctx := context.Background()
 	httpPkg := new(api.HttpPkg)
 	t := new(system.Clock)
+
+	dataDir, err := algod.GetDataDir(algodData)
+	if err != nil {
+		log.Fatal(err)
+	}
 	client, err := algod.GetClient(dataDir)
 	cobra.CheckErr(err)
 
 	// Fetch the state and handle any creation errors
-	state, stateResponse, err := algod.NewStateModel(ctx, client, httpPkg, incentivesFlag, version)
+	state, stateResponse, err := algod.NewStateModel(ctx, client, httpPkg, incentivesFlag, version, dataDir)
 	utils.WithInvalidResponsesExplanations(err, stateResponse, cmd.UsageString())
 	cobra.CheckErr(err)
 	// Construct the TUI Model from the State
