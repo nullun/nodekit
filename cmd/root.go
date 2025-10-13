@@ -157,7 +157,9 @@ func runTUI(cmd *cobra.Command, algodData string, incentivesFlag bool, version s
 		// Check if the instance is lagging
 		lagging, err := algod.IsLagging(httpPkg, state.Status.LastRound, state.Status.Network)
 		if err != nil {
-			cobra.CheckErr(err)
+			if err != api.ErrInvalidNetwork {
+				cobra.CheckErr(err)
+			}
 		}
 		state.Watch(func(status *algod.StateModel, err error) {
 			// Handle Fast Catchup

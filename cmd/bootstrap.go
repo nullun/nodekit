@@ -206,7 +206,7 @@ var bootstrapCmd = &cobra.Command{
 			}
 			// Get the latest catchpoint
 			catchpoint, _, err := algod.GetLatestCatchpoint(httpPkg, network)
-			if err != nil && err.Error() == api.InvalidNetworkParamMsg {
+			if err != nil && err == api.ErrInvalidNetwork {
 				log.Fatal("This network does not support fast-catchup.")
 			} else {
 				log.Info(style.Green.Render("Latest Catchpoint: " + catchpoint))
