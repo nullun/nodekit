@@ -2,6 +2,7 @@ package configure
 
 import (
 	"fmt"
+	"time"
 
 	cmdutils "github.com/algorandfoundation/nodekit/cmd/utils"
 	"github.com/algorandfoundation/nodekit/cmd/utils/explanations"
@@ -117,6 +118,12 @@ var algodCmd = cmdutils.WithAlgodFlags(&cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
+
+			// Wait 1 second.
+			// Calling stop & start too quickly on Mac (launchctl) appears to
+			// result in a false successfully start. Haven't investigated why.
+			time.Sleep(1 * time.Second)
+
 			err = algod.Start()
 			if err != nil {
 				log.Fatal(err)
