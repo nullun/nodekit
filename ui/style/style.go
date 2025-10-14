@@ -2,10 +2,11 @@ package style
 
 import (
 	"fmt"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/ansi"
 	"regexp"
 	"strings"
+
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 var (
@@ -209,14 +210,16 @@ const BANNER_NODE = `
 ████   ██ ██    ██ ██   ██ ██      
 ██ ██  ██ ██    ██ ██   ██ █████   
 ██  ██ ██ ██    ██ ██   ██ ██      
-██   ████  ██████  ██████  ███████ `
+██   ████  ██████  ██████  ███████ 
+                                   `
+
 const BANNER_KIT = `
 ██╗  ██╗██╗████████╗
 ██║ ██╔╝██║╚══██╔══╝
 █████╔╝ ██║   ██║   
 ██╔═██╗ ██║   ██║   
 ██║  ██╗██║   ██║   
-╚═╝  ╚═╝╚═╝   ╚═╝`
+╚═╝  ╚═╝╚═╝   ╚═╝   `
 
 var BANNER string
 
