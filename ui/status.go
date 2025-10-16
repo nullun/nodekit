@@ -2,14 +2,15 @@ package ui
 
 import (
 	"fmt"
-	"github.com/algorandfoundation/nodekit/internal/algod"
-	"github.com/algorandfoundation/nodekit/ui/style"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"math"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/algorandfoundation/nodekit/internal/algod"
+	"github.com/algorandfoundation/nodekit/ui/style"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // StatusViewModel is extended from the internal.StatusModel
@@ -93,6 +94,15 @@ func (m StatusViewModel) View() string {
 	// Last Round
 	row1 := lipgloss.JoinHorizontal(lipgloss.Left, beginning, middle, end)
 
+	if m.Data.Config.EnableP2PHybridMode != nil && *m.Data.Config.EnableP2PHybridMode {
+		end = "P2P: " + style.Green.Render("YES") + " "
+	} else {
+		end = "P2P: " + style.Red.Render("NO") + " "
+	}
+	beginning = ""
+	middle = strings.Repeat(" ", max(0, size-(lipgloss.Width(beginning)+lipgloss.Width(end)+2)))
+	row2 := lipgloss.JoinHorizontal(lipgloss.Left, beginning, middle, end)
+
 	roundTime := fmt.Sprintf("%.2fs", float64(m.Data.Metrics.RoundTime)/float64(time.Second))
 	if m.Data.Status.State != algod.StableState {
 		roundTime = "--"
@@ -101,7 +111,7 @@ func (m StatusViewModel) View() string {
 	end = getBitRate(m.Data.Metrics.TX) + style.Green.Render("TX ")
 	middle = strings.Repeat(" ", max(0, size-(lipgloss.Width(beginning)+lipgloss.Width(end)+2)))
 
-	row2 := lipgloss.JoinHorizontal(lipgloss.Left, beginning, middle, end)
+	row3 := lipgloss.JoinHorizontal(lipgloss.Left, beginning, middle, end)
 
 	tps := fmt.Sprintf("%.2f", m.Data.Metrics.TPS)
 	if m.Data.Status.State != algod.StableState {
@@ -111,7 +121,7 @@ func (m StatusViewModel) View() string {
 	end = getBitRate(m.Data.Metrics.RX) + style.Green.Render("RX ")
 	middle = strings.Repeat(" ", max(0, size-(lipgloss.Width(beginning)+lipgloss.Width(end)+2)))
 
-	row3 := lipgloss.JoinHorizontal(lipgloss.Left, beginning, middle, end)
+	row4 := lipgloss.JoinHorizontal(lipgloss.Left, beginning, middle, end)
 
 	return style.WithTitles(
 		"( "+style.Red.Render(fmt.Sprintf("Nodekit-%s", m.Data.Version))+" )",
@@ -119,10 +129,10 @@ func (m StatusViewModel) View() string {
 		style.ApplyBorder(max(0, size-2), 5, "5").Render(
 			lipgloss.JoinVertical(lipgloss.Left,
 				row1,
-				"",
-				style.Cyan.Render(" -- "+strconv.Itoa(m.Data.Metrics.Window)+" round average --"),
 				row2,
+				style.Cyan.Render(" -- "+strconv.Itoa(m.Data.Metrics.Window)+" round average --"),
 				row3,
+				row4,
 			),
 		),
 	)

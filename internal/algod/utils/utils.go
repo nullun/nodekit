@@ -3,17 +3,21 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/algorandfoundation/nodekit/internal/algod/telemetry"
-	"github.com/algorandfoundation/nodekit/internal/system"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/algorandfoundation/nodekit/internal/algod/config"
+	"github.com/algorandfoundation/nodekit/internal/algod/telemetry"
+	"github.com/algorandfoundation/nodekit/internal/system"
+	"github.com/charmbracelet/log"
+	"github.com/spf13/cobra"
 )
 
 const AlgodNetEndpointFileMissingAddress = "missing://endpoint"
+const NodeKitHybridNoticeFilename = ".NodeKit_Hybrid_Notice"
 
 type DataFolderConfig struct {
 	Path      string `json:"path"`
@@ -46,7 +50,8 @@ func ToDataFolderConfig(path string) (DataFolderConfig, error) {
 	return dataFolderConfig, nil
 }
 
-// IsDataDir determines if the specified path is a valid Algorand data directory containing an "algod.token" file.
+// IsDataDir determines if the specified path is a valid Algorand
+// data directory containing the "genesis.json" file.
 func IsDataDir(path string) bool {
 	info, err := os.Stat(path)
 
@@ -60,11 +65,9 @@ func IsDataDir(path string) bool {
 		return false
 	}
 
-	paths := system.FindPathToFile(path, "algod.token")
-	if len(paths) == 1 {
-		return true
-	}
-	return false
+	genesisFile := filepath.Join(path, "genesis.json")
+	_, err = os.Stat(genesisFile)
+	return err == nil
 }
 
 // GetKnownDataPaths Does a lazy check for Algorand data directories, based off of known common paths
@@ -109,7 +112,7 @@ func GetExpiresTime(t system.Time, lastRound int, roundTime time.Duration, voteL
 func GetTokenFromDataDir(path string) (string, error) {
 	var token string
 
-	file, err := os.ReadFile(path + "/algod.admin.token")
+	file, err := os.ReadFile(filepath.Join(path, "algod.admin.token"))
 	if err != nil {
 		return token, err
 	}
@@ -120,7 +123,7 @@ func GetTokenFromDataDir(path string) (string, error) {
 
 func GetNetworkFromDataDir(path string) (string, error) {
 	var network string
-	file, err := os.ReadFile(path + "/genesis.json")
+	file, err := os.ReadFile(filepath.Join(path, "genesis.json"))
 	if err != nil {
 		return network, err
 	}
@@ -137,7 +140,7 @@ func GetNetworkFromDataDir(path string) (string, error) {
 
 func GetPidFromDataDir(path string) (int, error) {
 	var pid int
-	file, err := os.ReadFile(path + "/algod.pid")
+	file, err := os.ReadFile(filepath.Join(path, "algod.pid"))
 	if err != nil {
 		return pid, err
 	}
@@ -152,7 +155,7 @@ func GetPidFromDataDir(path string) (int, error) {
 
 func GetEndpointFromDataDir(path string) (string, error) {
 	var endpoint string
-	file, err := os.ReadFile(path + "/algod.net")
+	file, err := os.ReadFile(filepath.Join(path, "algod.net"))
 	if err != nil {
 		return AlgodNetEndpointFileMissingAddress, nil
 	}
@@ -166,7 +169,7 @@ func GetEndpointFromDataDir(path string) (string, error) {
 // specified data directory and unmarshals it into a telemetry.Config.
 func GetLogConfigFromDataDir(path string) (*telemetry.Config, error) {
 	var logConfig telemetry.Config
-	file, err := os.ReadFile(path + "/logging.config")
+	file, err := os.ReadFile(filepath.Join(path, "logging.config"))
 	if err != nil {
 		return &logConfig, err
 	}
@@ -184,7 +187,69 @@ func WriteLogConfigToDataDir(path string, logConfig *telemetry.Config) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(path+"/logging.config", file, 0644)
+	err = os.WriteFile(filepath.Join(path, "logging.config"), file, 0o644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetConfigFromDataDir reads a node configuration file from the
+// specific data directory and unmarshals it into a config.Config.
+func GetConfigFromDataDir(path string) (*config.Config, error) {
+	var algodConfig config.Config
+
+	file, err := os.ReadFile(filepath.Join(path, "config.json"))
+	if err != nil {
+		return &algodConfig, err
+	}
+
+	err = json.Unmarshal(file, &algodConfig)
+	if err != nil {
+		return &algodConfig, err
+	}
+
+	return &algodConfig, nil
+}
+
+// WriteConfigToDataDir writes the provided node configuration to a file in the specified data directory.
+// The configuration is formatted as indented JSON and saved to a file named "config.json".
+func WriteConfigToDataDir(path string, algodConfig *config.Config) error {
+	// Read an existing config and unmarshal it into a map, or make a new map.
+	var currentConfigMap map[string]json.RawMessage
+	file, err := os.ReadFile(filepath.Join(path, "config.json"))
+	if err == nil {
+		if err := json.Unmarshal(file, &currentConfigMap); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	} else {
+		currentConfigMap = make(map[string]json.RawMessage)
+	}
+
+	// We only want user-defined values (non-nil), so omitempty removes
+	// everything else when unmarshaling into newConfigMap.
+	tempConfigMap, err := json.Marshal(algodConfig)
+	if err != nil {
+		return err
+	}
+	var newConfigMap map[string]json.RawMessage
+	if err := json.Unmarshal(tempConfigMap, &newConfigMap); err != nil {
+		return err
+	}
+
+	// Update currentConfigMap with user-defined values.
+	for key, value := range newConfigMap {
+		currentConfigMap[key] = value
+	}
+
+	// Marshal and save the new config
+	newConfig, err := json.MarshalIndent(currentConfigMap, "", "\t")
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(filepath.Join(path, "config.json"), newConfig, 0o644)
 	if err != nil {
 		return err
 	}
@@ -197,4 +262,37 @@ func ReplaceEndpointUrl(s string) string {
 	s = strings.Replace(s, "0.0.0.0", "127.0.0.1", 1)
 	s = strings.Replace(s, "[::]", "127.0.0.1", 1)
 	return s
+}
+
+// ShowHybridPopUp returns true if a specific dot file doesn't exist in the users
+// home directory, as the user may not have write access in the data directory.
+func ShowHybridPopUp() bool {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		// Can't identify home directory, prevent showing
+		// because they can never disable it.
+		return false
+	}
+	hybridNotice := filepath.Join(home, NodeKitHybridNoticeFilename)
+	_, errFile := os.Stat(hybridNotice)
+	return errFile != nil
+}
+
+// DontShowHybridPopUp touches a specific dot file in the users home directory,
+// as the user may not have write access in the dara directory
+func DontShowHybridPopUp() {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		// Can't identify home directory
+		return
+	}
+	hybridNotice := filepath.Join(home, NodeKitHybridNoticeFilename)
+	_, err = os.Stat(hybridNotice)
+	if os.IsNotExist(err) {
+		file, err := os.Create(hybridNotice)
+		if err != nil {
+			log.Errorf("failed to touch file: %s", err)
+		}
+		defer file.Close()
+	}
 }
