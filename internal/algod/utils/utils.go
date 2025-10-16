@@ -12,10 +12,12 @@ import (
 	"github.com/algorandfoundation/nodekit/internal/algod/config"
 	"github.com/algorandfoundation/nodekit/internal/algod/telemetry"
 	"github.com/algorandfoundation/nodekit/internal/system"
+	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
 )
 
 const AlgodNetEndpointFileMissingAddress = "missing://endpoint"
+const NodeKitHybridNoticeFilename = ".NodeKit_Hybrid_Notice"
 
 type DataFolderConfig struct {
 	Path      string `json:"path"`
@@ -260,4 +262,37 @@ func ReplaceEndpointUrl(s string) string {
 	s = strings.Replace(s, "0.0.0.0", "127.0.0.1", 1)
 	s = strings.Replace(s, "[::]", "127.0.0.1", 1)
 	return s
+}
+
+// ShowHybridPopUp returns true if a specific dot file doesn't exist in the users
+// home directory, as the user may not have write access in the data directory.
+func ShowHybridPopUp() bool {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		// Can't identify home directory, prevent showing
+		// because they can never disable it.
+		return false
+	}
+	hybridNotice := filepath.Join(home, NodeKitHybridNoticeFilename)
+	_, errFile := os.Stat(hybridNotice)
+	return errFile != nil
+}
+
+// DontShowHybridPopUp touches a specific dot file in the users home directory,
+// as the user may not have write access in the dara directory
+func DontShowHybridPopUp() {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		// Can't identify home directory
+		return
+	}
+	hybridNotice := filepath.Join(home, NodeKitHybridNoticeFilename)
+	_, err = os.Stat(hybridNotice)
+	if os.IsNotExist(err) {
+		file, err := os.Create(hybridNotice)
+		if err != nil {
+			log.Errorf("failed to touch file: %s", err)
+		}
+		defer file.Close()
+	}
 }

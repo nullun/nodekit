@@ -14,7 +14,6 @@ import (
 // StateModel represents the state of the application,
 // including status, metrics, accounts, keys, and other configurations.
 type StateModel struct {
-
 	// Version indicates the version of the application.
 	Version string
 
@@ -59,7 +58,8 @@ type StateModel struct {
 	Context context.Context
 
 	// Algod Config
-	Config *config.Config
+	Config  *config.Config
+	DataDir string
 }
 
 // NewStateModel initializes and returns a new StateModel instance
@@ -97,6 +97,7 @@ func NewStateModel(ctx context.Context, client api.ClientWithResponsesInterface,
 		HttpPkg: httpPkg,
 		Context: ctx,
 		Config:  algodConfig,
+		DataDir: dataDir,
 
 		IncentivesDisabled: incentivesDisabled,
 	}, partkeysResponse, nil

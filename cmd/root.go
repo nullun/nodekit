@@ -12,6 +12,7 @@ import (
 	"github.com/algorandfoundation/nodekit/cmd/utils"
 	"github.com/algorandfoundation/nodekit/cmd/utils/explanations"
 	"github.com/algorandfoundation/nodekit/internal/algod"
+	algodutils "github.com/algorandfoundation/nodekit/internal/algod/utils"
 	"github.com/algorandfoundation/nodekit/internal/system"
 	"github.com/algorandfoundation/nodekit/ui"
 	"github.com/algorandfoundation/nodekit/ui/app"
@@ -161,6 +162,14 @@ func runTUI(cmd *cobra.Command, algodData string, incentivesFlag bool, version s
 				cobra.CheckErr(err)
 			}
 		}
+
+		// Display Hybrid Notice on launch
+		// Only shown if EnableP2PHybridMode is unset/false and hasn't already been set to "do not show again"
+		hybridEnabled := m.Data.Config.EnableP2PHybridMode != nil && *m.Data.Config.EnableP2PHybridMode
+		if !hybridEnabled && algodutils.ShowHybridPopUp() {
+			p.Send(app.HybridModal)
+		}
+
 		state.Watch(func(status *algod.StateModel, err error) {
 			// Handle Fast Catchup
 			if state.Status.State == algod.FastCatchupState {

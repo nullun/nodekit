@@ -41,6 +41,9 @@ var (
 	Bold = lipgloss.NewStyle().
 		Bold(true).
 		Render
+	Underline = lipgloss.NewStyle().
+			Underline(true).
+			Render
 	BoldUnderline = lipgloss.NewStyle().
 			Bold(true).
 			Underline(true).
