@@ -9,6 +9,7 @@ import (
 	"github.com/algorandfoundation/nodekit/internal/algod/participation"
 	"github.com/algorandfoundation/nodekit/internal/algod/utils"
 	"github.com/algorandfoundation/nodekit/internal/system"
+	"github.com/charmbracelet/log"
 )
 
 // StateModel represents the state of the application,
@@ -77,10 +78,13 @@ func NewStateModel(ctx context.Context, client api.ClientWithResponsesInterface,
 	}
 
 	partKeys, partkeysResponse, err := participation.GetList(ctx, client)
+	if err != nil {
+		log.Errorf("Failed to fetch participation keys from node: %s", err)
+	}
 
 	algodConfig, err := utils.GetConfigFromDataDir(dataDir)
 	if err != nil {
-		panic(err)
+		log.Errorf("Unable to open config.json: %s", err)
 	}
 
 	return &StateModel{

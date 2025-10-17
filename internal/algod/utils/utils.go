@@ -201,6 +201,9 @@ func GetConfigFromDataDir(path string) (*config.Config, error) {
 
 	file, err := os.ReadFile(filepath.Join(path, "config.json"))
 	if err != nil {
+		if os.IsNotExist(err) {
+			return &algodConfig, nil
+		}
 		return &algodConfig, err
 	}
 
