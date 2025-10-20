@@ -9,6 +9,7 @@ import (
 	"github.com/algorandfoundation/nodekit/ui/style"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 type ViewModel struct {
@@ -41,7 +42,10 @@ func (m ViewModel) HandleMessage(msg tea.Msg) (ViewModel, tea.Cmd) {
 		case "esc", "enter", "p":
 			return m, app.EmitCloseOverlay()
 		case "d":
-			utils.DontShowHybridPopUp()
+			err := utils.DontShowHybridPopUp()
+			if err != nil {
+				log.Warnf("unable to disable hybrid popup: %s", err)
+			}
 			return m, app.EmitCloseOverlay()
 		case "ctrl+c":
 			return m, tea.Quit

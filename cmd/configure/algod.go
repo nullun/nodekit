@@ -55,8 +55,6 @@ var algodCmd = cmdutils.WithAlgodFlags(&cobra.Command{
 
 		// Are we doing something? If not, just display the current configuration.
 		if hasFlags {
-			log.Warn(style.Yellow.Render(explanations.SudoWarningMsg))
-
 			newConfig := &config.Config{
 				// EnableP2PHybridMode: currentConfig.EnableP2PHybridMode,
 			}
@@ -71,7 +69,8 @@ var algodCmd = cmdutils.WithAlgodFlags(&cobra.Command{
 			} else {
 				err := utils.WriteConfigToDataDir(dataDir, &mergedConfig)
 				if err != nil {
-					log.Fatal(err)
+					log.Warnf("%s", err)
+					log.Fatalf("%s", explanations.AlgorandPermissionErrorMsg)
 				}
 				restartRequired = true
 			}

@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/algorandfoundation/nodekit/internal/algod/config"
 	"github.com/algorandfoundation/nodekit/internal/algod/telemetry"
 	"github.com/algorandfoundation/nodekit/internal/system"
-	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
 )
 
@@ -201,6 +201,9 @@ func GetConfigFromDataDir(path string) (*config.Config, error) {
 
 	file, err := os.ReadFile(filepath.Join(path, "config.json"))
 	if err != nil {
+		if os.IsNotExist(err) {
+			return &algodConfig, nil
+		}
 		return &algodConfig, err
 	}
 
@@ -217,11 +220,14 @@ func GetConfigFromDataDir(path string) (*config.Config, error) {
 func WriteConfigToDataDir(path string, algodConfig *config.Config) error {
 	// Read an existing config and unmarshal it into a map, or make a new map.
 	var currentConfigMap map[string]json.RawMessage
-	file, err := os.ReadFile(filepath.Join(path, "config.json"))
+	configFile := filepath.Join(path, "config.json")
+	file, err := os.ReadFile(configFile)
 	if err == nil {
 		if err := json.Unmarshal(file, &currentConfigMap); err != nil {
 			return err
 		}
+	} else if os.IsPermission(err) {
+		return err
 	} else if !os.IsNotExist(err) {
 		return err
 	} else {
@@ -249,10 +255,48 @@ func WriteConfigToDataDir(path string, algodConfig *config.Config) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(filepath.Join(path, "config.json"), newConfig, 0o644)
+	err = os.WriteFile(filepath.Join(path, "config.json"), newConfig, 0o664)
 	if err != nil {
 		return err
 	}
+
+	// If we're sudo'ed set permissions/ownership on the config file
+	if system.IsSudo() {
+		return setFilePermissions(configFile)
+	}
+
+	return nil
+}
+
+// setFilePermissions matches a file's user and group
+// to its parent directory, and sets perms to 0o664.
+// Will only succeed if run as root (sudo)
+func setFilePermissions(filePath string) error {
+	// Get the parent directory info
+	dirPath := filepath.Dir(filePath)
+	dirInfo, err := os.Stat(dirPath)
+	if err != nil {
+		return err
+	}
+
+	// Extract ownership info from the directory.
+	// This is specific to Unix-like systems (Linux and macOS)
+	stat, ok := dirInfo.Sys().(*syscall.Stat_t)
+	if !ok {
+		return fmt.Errorf("unable to get ownership details on file: %s", dirPath)
+	}
+
+	// Apply ownership permissions to file
+	uid := int(stat.Uid)
+	gid := int(stat.Gid)
+	if err := os.Chown(filePath, uid, gid); err != nil {
+		return err
+	}
+	// Also make sure group can write in the future
+	if err := os.Chmod(filePath, 0o664); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -280,19 +324,21 @@ func ShowHybridPopUp() bool {
 
 // DontShowHybridPopUp touches a specific dot file in the users home directory,
 // as the user may not have write access in the dara directory
-func DontShowHybridPopUp() {
+func DontShowHybridPopUp() error {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		// Can't identify home directory
-		return
+		return nil
 	}
 	hybridNotice := filepath.Join(home, NodeKitHybridNoticeFilename)
 	_, err = os.Stat(hybridNotice)
 	if os.IsNotExist(err) {
 		file, err := os.Create(hybridNotice)
 		if err != nil {
-			log.Errorf("failed to touch file: %s", err)
+			return fmt.Errorf("failed to touch file: %s", err)
 		}
 		defer file.Close()
 	}
+
+	return nil
 }
