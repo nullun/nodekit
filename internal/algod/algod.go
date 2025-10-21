@@ -47,17 +47,18 @@ func IsRunning(dataDir string) bool {
 	// The syscall.Kill function with signal 0 checks for process existence and permissions.
 	// It doesn't actually kill the process.
 	err = syscall.Kill(pid, syscall.Signal(0))
+	if err != nil {
+		// ESRCH means "No such process".
+		if err == syscall.ESRCH {
+			return false
+		}
 
-	// ESRCH means "No such process".
-	if err == syscall.ESRCH {
-		return false
-	}
-
-	// EPERM means "operation not permitted"
-	// i.e. you're not root, which is fine, since we just want to know if the process exists.
-	if err != syscall.EPERM {
-		// TODO: Probably worth asking anyone seeing something here to let us know.
-		return false
+		// EPERM means "operation not permitted"
+		// i.e. you're not root, which is fine, since we just want to know if the process exists.
+		if err != syscall.EPERM {
+			// TODO: Probably worth asking anyone seeing something here to let us know.
+			return false
+		}
 	}
 
 	return true
