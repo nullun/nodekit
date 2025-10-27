@@ -26,7 +26,7 @@ func IsInstalled() bool {
 	return system.CmdExists("algod")
 }
 
-// IsRunning checks the algod PID file and if it's currenlty running on the host operating system.
+// IsRunning checks the algod PID file and if it's currently running on the host operating system.
 // It returns true if the application is running, or false if it is not or if an error occurs.
 // This function supports Linux and macOS platforms.
 func IsRunning(dataDir string) bool {

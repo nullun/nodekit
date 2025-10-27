@@ -323,7 +323,7 @@ func ShowHybridPopUp() bool {
 }
 
 // DontShowHybridPopUp touches a specific dot file in the users home directory,
-// as the user may not have write access in the dara directory
+// as the user may not have write access in the data directory
 func DontShowHybridPopUp() error {
 	home, err := os.UserHomeDir()
 	if err != nil {
